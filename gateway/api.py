@@ -16,15 +16,6 @@ MQTT_BROKER  = os.environ.get("MQTT_BROKER", "localhost")
 MQTT_PORT_N  = 1883
 API_PORT     = 3002  # 3001 para el Docker
 
-device_data = defaultdict(list)
-MAX_READINGS = 100
-
-stats_global = {
-    'total_requests': 0,
-    'requests_by_device': defaultdict(int),
-    'api_start_time': time.time()
-}
-
 def obtenerTimestamp(): #Devuelve la fecha y hora para tener el registro en el dashboard
     return datetime.now().isoformat()
 
@@ -35,18 +26,6 @@ def cargarJSON(): #Solo lee el json que pasa el gateway
     except Exception as e:
         print(f"[Error] No se pudo leer {DATA_FILE}: {e}")
         return []
-
-#Esto es para calcular el mínimo, máximo, el promedio y la desv. estándar de la temperatura, para que se vea en el dashboard
-def calcularEstadisticasDispositivo(lecturas): 
-    temperaturas = [r['temperatura'] for r in lecturas if 'temperatura' in r]
-    if not temperaturas: return None
-    return {
-        'count': len(temperaturas),
-        'avg':   round(statistics.mean(temperaturas), 2),
-        'min':   round(min(temperaturas), 2),
-        'max':   round(max(temperaturas), 2),
-        'std':   round(statistics.stdev(temperaturas), 2) if len(temperaturas) > 1 else 0
-    }
 
 # Endpoints para pasar los datos al dashboard
 
@@ -162,7 +141,6 @@ def api_control(): #Aquí se controla el relay del esp, hace que se encienda o a
 
 @app.route('/api/nodes', methods=['GET'])
 def api_nodos(): #Esto es para devolver los esp que han mandado datos
-    """Retorna la lista de nodos que han enviado data."""
     data = cargarJSON()
     nodos = list({r['nodo'] for r in data if 'nodo' in r})
     return jsonify({'status': 'ok', 'nodos': nodos, 'total': len(nodos)}), 200
