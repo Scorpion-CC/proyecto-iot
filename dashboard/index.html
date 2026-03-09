@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monitor IoT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/dashboard/common.css" rel="stylesheet" />
+  </head>
+  <body>
+    <header>
+      <div class="header-left">
+        <h1>Parcial 1 - Dashboard</h1>
+    </header>
+
+    <main>
+      <p class="label">ESP32 Conectados</p>
+      <div class="nodes" id="nodes">
+        <div class="empty">No hay ningún ESP32 conectado actualmente</div>
+      </div>
+
+      <p class="label">Gráficas</p>
+      <div class="charts">
+        <div class="chart-card">
+          <div class="chart-title">Temperatura (°C)</div>
+          <div class="chart-wrap"><canvas id="chart-temp"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Humedad (%)</div>
+          <div class="chart-wrap"><canvas id="chart-hum"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Luz (%)</div>
+          <div class="chart-wrap"><canvas id="chart-light"></canvas></div>
+        </div>
+      </div>
+
+      <p class="label">Estadísticas</p>
+      <div class="stats-grid" id="stats"></div>
+    </main>
+
+    <div id="toasts"></div>
+
+    <script>
+      const API_BASE = "http://192.168.100.240:3002"; //"http://192.168.1.100:3002" para la rasp, "http://localhost:5001" para el docker
+      const REFRESH_MS = 5000;
+      const HISTORY_N = 40;
+
+      const COLORS = { nodo1: "#f97316", nodo2: "#3b82f6", nodo3: "#22c55e" };
+      const color = (n) => COLORS[n] || "#a855f7";
+
+      // Charts
+      const chartOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        plugins: {
+          legend: {
+            labels: {
+              font: { family: "Inter", size: 11 },
+              boxWidth: 10,
+              color: "#555",
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: "#bbb", font: { size: 9 }, maxTicksLimit: 6 },
+            grid: { color: "#f0f0f0" },
+          },
+          y: {
+            ticks: { color: "#bbb", font: { size: 10 } },
+            grid: { color: "#f0f0f0" },
+          },
+        },
+      };
+
+      function makeChart(id) {
+        return new Chart(document.getElementById(id).getContext("2d"), {
+          type: "line",
+          data: { labels: [], datasets: [] },
+          options: { ...chartOpts },
+        });
+      }
+
+      const charts = {
+        temp: makeChart("chart-temp"),
+        hum: makeChart("chart-hum"),
+        light: makeChart("chart-light"),
+      };
+      const state = { nodes: {}, relays: {}, history: [] };
+
+      // API
+      async function get(path) {
+        const r = await fetch(API_BASE + path);
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      }
+      async function post(path, body) {
+        const r = await fetch(API_BASE + path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      }
+
+      //Toast
+      function toast(msg) {
+        const el = document.createElement("div");
+        el.className = "toast";
+        el.textContent = msg;
+        document.getElementById("toasts").appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+      }
+
+      //Relay
+      async function toggleRelay(nodo, on) {
+        try {
+          await post("/api/control", { nodo, estado: on ? 1 : 0 });
+          state.relays[nodo] = on ? 1 : 0;
+          toast(`${nodo}: relay ${on ? "encendido" : "apagado"}`);
+          renderNodes();
+        } catch (e) {
+          toast(`Error al controlar ${nodo}`);
+        }
+      }
+
+      //Render Nodes
+      function renderNodes() {
+        const nodes = Object.keys(state.nodes);
+        const grid = document.getElementById("nodes");
+        if (!nodes.length) return;
+
+        grid.innerHTML = nodes
+          .map((n) => {
+            const d = state.nodes[n];
+            const on = state.relays[n] === 1;
+            const c = color(n);
+            const ts = d.timestamp
+              ? new Date(d.timestamp).toLocaleTimeString("es-MX")
+              : "—";
+
+            return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="node-dot" style="background:${c}"></div>
+          ${n.toUpperCase()}
+        </div>
+        <span class="card-time">${ts}</span>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-val t">${d.temperatura}°</div><div class="metric-lbl">Temp</div></div>
+        <div class="metric"><div class="metric-val h">${d.humedad}%</div><div class="metric-lbl">Humedad</div></div>
+        <div class="metric"><div class="metric-val l">${d.luz}%</div><div class="metric-lbl">Luz</div></div>
+      </div>
+      <div class="relay-row">
+        <span>Relevador</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <label class="toggle">
+            <input type="checkbox" ${on ? "checked" : ""} onchange="toggleRelay('${n}',this.checked)" />
+            <div class="slider"></div>
+          </label>
+          <span class="relay-state ${on ? "on" : ""}">${on ? "ON" : "OFF"}</span>
+        </div>
+      </div>
+    </div>`;
+          })
+          .join("");
+      }
+
+      //Render Charts
+      function renderCharts() {
+        if (!state.history.length) return;
+        const nodes = [...new Set(state.history.map((r) => r.nodo))];
+        const labels = [
+          ...new Set(
+            state.history.map((r) =>
+              new Date(r.timestamp).toLocaleTimeString("es-MX", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              }),
+            ),
+          ),
+        ].slice(-HISTORY_N);
+
+        const fields = { temp: "temperatura", hum: "humedad", light: "luz" };
+        Object.entries(fields).forEach(([key, field]) => {
+          const chart = charts[key];
+          chart.data.labels = labels;
+          chart.data.datasets = nodes.map((n) => ({
+            label: n,
+            data: state.history
+              .filter((r) => r.nodo === n)
+              .slice(-HISTORY_N)
+              .map((r) => r[field]),
+            borderColor: color(n),
+            backgroundColor: color(n) + "18",
+            borderWidth: 2,
+            pointRadius: 2,
+            tension: 0.4,
+            fill: true,
+          }));
+          chart.update("none");
+        });
+      }
+
+      //Render Stats
+      async function renderStats() {
+        try {
+          const res = await get("/api/stats");
+          const nodes = Object.keys(res.stats);
+          if (!nodes.length) return;
+          document.getElementById("stats").innerHTML = nodes
+            .map((n) => {
+              const s = res.stats[n];
+              const c = color(n);
+              return `
+      <div class="stats-card">
+        <div class="stats-head" style="border-left:3px solid ${c};padding-left:13px">
+          ${n.toUpperCase()} · ${s.total_lecturas} lecturas
+        </div>
+        <table class="stats-table">
+          <thead><tr><th>Variable</th><th>Mín</th><th>Máx</th><th>Promedio</th></tr></thead>
+          <tbody>
+            <tr><td>Temp (°C)</td><td>${s.temperatura.min}</td><td>${s.temperatura.max}</td><td class="bold t">${s.temperatura.promedio}</td></tr>
+            <tr><td>Humedad (%)</td><td>${s.humedad.min}</td><td>${s.humedad.max}</td><td class="bold h">${s.humedad.promedio}</td></tr>
+            <tr><td>Luz (%)</td><td>${s.luz.min}</td><td>${s.luz.max}</td><td class="bold l">${s.luz.promedio}</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+            })
+            .join("");
+        } catch (e) {}
+      }
+
+      //Connection
+      function setConnected(ok) {
+        document.getElementById("dot").className = "dot " + (ok ? "on" : "off");
+        document.getElementById("conn-label").textContent = ok
+          ? "En línea"
+          : "Sin conexión";
+      }
+
+      //Main loop
+      async function refresh() {
+        try {
+          const latest = await get("/api/latest");
+          state.nodes = latest.nodos;
+          Object.entries(state.nodes).forEach(([id, d]) => {
+            if (state.relays[id] === undefined) state.relays[id] = d.relay || 0;
+          });
+          setConnected(true);
+          renderNodes();
+        } catch (e) {
+          setConnected(false);
+        }
+
+        try {
+          const hist = await get(`/api/history?limit=${HISTORY_N * 3}`);
+          state.history = hist.history;
+          renderCharts();
+        } catch (e) {}
+
+        renderStats();
+        document.getElementById("last-update").textContent =
+          new Date().toLocaleTimeString("es-MX");
+      }
+
+      refresh();
+      setInterval(refresh, REFRESH_MS);
+    </script>
+  </body>
+</html>
