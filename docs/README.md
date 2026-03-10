@@ -73,7 +73,9 @@ Luego de hacer esto tenemos que instalar todas las dependencias para que funcion
 Para instalar mosquitto tenemos que ingresar los siguientes comandos:
 
 sudo apt install mosquitto mosquitto-clients -y
+
 sudo systemctl enable mosquitto
+
 sudo systemctl start mosquitto
 
 Y luego tenemos que verificar que ya esté activo, con el comando "sudo systemctl status mosquitto"
