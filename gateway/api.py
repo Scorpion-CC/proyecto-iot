@@ -14,7 +14,7 @@ CORS(app)
 DATA_FILE    = os.environ.get("DATA_FILE", "/home/marco/iot_data/sensor_data_eq2.json") #os.environ.get("DATA_FILE", "/data/sensor_data.json") para el docker
 MQTT_BROKER  = os.environ.get("MQTT_BROKER", "localhost")
 MQTT_PORT_N  = 1883
-API_PORT     = 3002  # 3001 para el Docker
+API_PORT     = 3002  # 3001 para el Docker, pero ya no es necesario porque la raspberry ya funciona
 
 def obtenerTimestamp(): #Devuelve la fecha y hora para tener el registro en el dashboard
     return datetime.now().isoformat()
@@ -41,7 +41,7 @@ def api_ultima_lectura(): #Manda la última vez que se leyeron los datos del esp
         if nodo and nodo not in ultima_por_nodo:
             ultima_por_nodo[nodo] = lectura
 
-    return jsonify({
+    return jsonify({  #Esto es para que el dashboard reciba los datos de abajo y los use, en este caso es la última lectura de cada nodo
         'status':    'ok',
         'timestamp': obtenerTimestamp(),
         'nodos':     ultima_por_nodo
@@ -59,7 +59,7 @@ def api_historial(): #Es todo el historial de los datos que se han recabado
     if not data:
         return jsonify({'error': 'Sin datos disponibles'}), 404
 
-    return jsonify({
+    return jsonify({ #Devuelve la cantidad de datos que hay y el límite
         'status':   'ok',
         'count':    len(data[-limite:]),
         'limit':    limite,
@@ -91,7 +91,7 @@ def api_estadisticas(): #Manda el mínimo, máximo y el promedio de la temperatu
                 'promedio': round(statistics.mean(valores), 1)
             }
 
-        resultado[nodo] = {
+        resultado[nodo] = { #Devuelve los datos de cada esp32, con todo y mínimo, máximo y promedio de cada lectura usando la función "calcular"
             'total_lecturas': len(data_nodo),
             'temperatura':    calcular('temperatura'),
             'humedad':        calcular('humedad'),
@@ -127,7 +127,7 @@ def api_control(): #Aquí se controla el relay del esp, hace que se encienda o a
         accion = "encendido" if estado == 1 else "apagado"
         print(f"Relevador de {nodo} {accion}")
 
-        return jsonify({
+        return jsonify({  #Esto devuelve el estado del relay en el json
             'status':  'ok',
             'nodo':    nodo,
             'estado':  estado,

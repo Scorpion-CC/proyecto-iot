@@ -4,11 +4,11 @@
 #include <ArduinoJson.h>
 
 // ==================== CONFIGURACIÓN WiFi ====================
-#define WIFI_SSID     "Totalplay-B8A3"        // Cambiar
-#define WIFI_PASSWORD "B8A3A636xMXEJCyH"      // Cambiar
+#define WIFI_SSID     "Alumno"        // Cambiar Alumno  Totalplay-B8A3
+#define WIFI_PASSWORD "Mebe2ege"      // Cambiar Mebe2ege   B8A3A636xMXEJCyH
 
 // ==================== CONFIGURACIÓN MQTT ====================
-#define MQTT_SERVER   "192.168.100.240"        // IP de la Raspberry Pi
+#define MQTT_SERVER   "10.10.1.201"        // IP de la Raspberry Pi
 #define MQTT_PORT     1883                     // 1883 Raspberry Pi / 1884 Docker
 #define NODE_ID       "nodo1"                  // CAMBIAR: "nodo1", "nodo2" o "nodo3"
 
@@ -31,7 +31,7 @@ const unsigned long INTERVALO_PUBLICACION = 5000;  // Publicar cada 5 segundos
 bool estadoRelevador = false;
 
 // ==================== FUNCIÓN: Conectar WiFi ====================
-void conectarWiFi() {
+void conectarWiFi() { //Esta parte viene del código de Obi, sirve para conectarse al WiFi de la universidad y así se pueda conectar a la raspberry
   if (WiFi.status() == WL_CONNECTED) return;
 
   Serial.println("\n[WiFi] Conectando a: " + String(WIFI_SSID));
@@ -57,7 +57,7 @@ void conectarWiFi() {
 }
 
 // ==================== FUNCIÓN: Callback MQTT ====================
-void callbackMQTT(char* topic, byte* payload, unsigned int length) {
+void callbackMQTT(char* topic, byte* payload, unsigned int length) {  //Todo esto era del código de Obi, es para poder leer los comandos que van pasando y se imprime en la terminal
   // Convertir payload a String
   String mensaje = "";
   for (unsigned int i = 0; i < length; i++) mensaje += (char)payload[i];
@@ -84,7 +84,7 @@ void callbackMQTT(char* topic, byte* payload, unsigned int length) {
 }
 
 // ==================== FUNCIÓN: Conectar MQTT ====================
-void conectarMQTT() {
+void conectarMQTT() { //Esto viene del código de Obi, es para conectarse al MQTT que está en la raspberry
   while (!clienteMQTT.connected()) {
     Serial.println("\n[MQTT] Conectando al broker...");
     Serial.println("  Servidor: " + String(MQTT_SERVER));
@@ -94,7 +94,7 @@ void conectarMQTT() {
     if (clienteMQTT.connect(NODE_ID)) {
       Serial.println("[MQTT] ✓ Conectado al broker");
 
-      // Suscribirse al topic de control del relevador
+      // Suscribirse al topic de control del relevador, para que pueda abrirse y cerrarse cuando se haga el cambio en el dashboard.
       clienteMQTT.subscribe(TOPIC_CONTROL.c_str());
       Serial.println("[MQTT] ✓ Suscrito a: " + TOPIC_CONTROL);
 
@@ -108,7 +108,7 @@ void conectarMQTT() {
 }
 
 // ==================== FUNCIÓN: Leer Temperatura ====================
-float leerTemperatura() {
+float leerTemperatura() { //Esta parte lee la temperatura del dht11, y lo redondea para que no haya más de 1 decimal
   float t = dht.readTemperature();
   if (isnan(t)) {
     Serial.println("[DHT11] ✗ Error al leer temperatura");
@@ -118,7 +118,7 @@ float leerTemperatura() {
 }
 
 // ==================== FUNCIÓN: Leer Humedad ====================
-float leerHumedad() {
+float leerHumedad() { //Esto lee la humedad del dht11
   float h = dht.readHumidity();
   if (isnan(h)) {
     Serial.println("[DHT11] ✗ Error al leer humedad");
@@ -128,7 +128,7 @@ float leerHumedad() {
 }
 
 // ==================== FUNCIÓN: Leer Luz ====================
-float leerLuz() {
+float leerLuz() { //Esto lee los datos que devuelve el ldr, solo puede ser 0 o 100
   int val = digitalRead(LDR_PIN);
   return val == 0 ? 100 : 0;
 }

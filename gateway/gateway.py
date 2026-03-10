@@ -30,10 +30,10 @@ def cargarJSON():
     except:
         return []
 
-def guardarJSON(datos):
+def guardarJSON(datos): #Como el nombre lo dice, esto es para guardar el json, y solo mantiene los últimos 1000 registros para no saturar la memoria
     if len(datos) > MAX_REGISTROS:
         datos = datos[-MAX_REGISTROS:]
-    with open(DATA_FILE, "w") as f:
+    with open(DATA_FILE, "w") as f: #Esto es nada más para que se pueda leer bien en caso de que quieran abrir el json, que lo dudo
         json.dump(datos, f, indent=2)
 
 # MQTT CALLBACKS
