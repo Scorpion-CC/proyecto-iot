@@ -5,6 +5,7 @@ En este documento se encuentran todas las configuraciones principales que se tie
 ## Conexiones del ESP32
 
 Las conexiones van a estar estructuradas de la siguiente forma:
+
 Pin del módulo -> Pin del ESP32
 
 DHT11:
@@ -27,13 +28,15 @@ IN -> P26
 Antes de empezar a subir el código del ESP32, tenemos que verificar que tengamos las siguientes librerías instaladas en Arduino IDE:
 
 PubSubClient by Nick O'Leary
+
 DHT sensor library by Adafruit (con todo y dependencias)
+
 ArduinoJson by Benoit Blanchon
 
 ## Configuración del ESP32
 
 Aquí están los cambios que se tienen que hacer para cada ESP32.
-Estos cambios van en el archivo nodo_esp32_adaptado.
+Estos cambios van en el archivo esp32:
 
 define NODE_ID "nodo1" <-- Cambiar el nombre para cada ESP32, puede tener cualquier nombre, pero tiene que ser uno diferente en caso de que se utilice más de uno
 
@@ -41,9 +44,9 @@ define WIFI_SSID "WIFI" <-- Este es el nombre del wifi donde se va a probar todo
 
 define WIFI_PASSWORD "Contraseña" <-- Acá va la contraseña del WIFI que se está utilizando
 
-define MQTT_SERVER "X.X.X.X" <-- Acá va la IP de la raspberry pi, más adelante se explica cómo obtener esta IP
+define MQTT_SERVER "X.X.X.X" <-- Acá va la IP de la Raspberry Pi, más adelante se explica cómo obtener esta IP
 
-define MQTT_PORT 1883 <-- Este es el puerto de la raspberry
+define MQTT_PORT 1883 <-- Este es el puerto del broker instalado en la Raspberry
 
 Luego de hacer esos cambios podemos verificar el código y proceder a subirlo al ESP32.
 
@@ -58,7 +61,9 @@ const API_BASE = "http://192.168.100.240:3002";
 La parte "192.168.100.240" es la IP de la raspberry pi a utilizar, podemos encontrar esta ip siguiendo los siguientes pasos:
 
 1.Conectar la Raspberry Pi a una computadora a través de un cable Ethernet.
+
 2.Ingresar el siguiente comando: "ping _nombre de la raspberry_ -4". Lo que hace este comando es que la raspberry responda a la computadora mostrando la IP de la computadora usando IPV4, por eso el -4.
+
 El nombre de la raspberry por default es raspberry, entonces si tuvieramos una que no tiene ningún cambio el comando sería el siguiente: "ping raspberrypi -4".
 
 ## Configuración de la raspberry
