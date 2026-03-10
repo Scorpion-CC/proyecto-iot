@@ -9,18 +9,27 @@ Las conexiones van a estar estructuradas de la siguiente forma:
 Pin del módulo -> Pin del ESP32
 
 DHT11:
+
 "+" -> 3V3
+
 DATA -> P4
+
 "-" -> GND
 
 LDR:
+
 VCC -> 3V3
+
 DO -> P34
+
 GND -> GND
 
 RELAY:
+
 VCC -> 5V
+
 GND -> GND
+
 IN -> P26
 
 ## Dependencias de Arduino
