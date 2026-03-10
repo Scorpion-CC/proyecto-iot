@@ -35,11 +35,15 @@ ArduinoJson by Benoit Blanchon
 Aquí están los cambios que se tienen que hacer para cada ESP32.
 Estos cambios van en el archivo nodo_esp32_adaptado.
 
-#define NODE_ID "nodo1" <-- Cambiar el nombre para cada ESP32, puede tener cualquier nombre, pero tiene que ser uno diferente en caso de que se utilice más de uno
-#define WIFI_SSID "WIFI" <-- Este es el nombre del wifi donde se va a probar todo el proyecto
-#define WIFI_PASSWORD "Contraseña" <-- Acá va la contraseña del WIFI que se está utilizando
-#define MQTT_SERVER "X.X.X.X" <-- Acá va la IP de la raspberry pi, más adelante se explica cómo obtener esta IP
-#define MQTT_PORT 1883 <-- Este es el puerto de la raspberry
+define NODE_ID "nodo1" <-- Cambiar el nombre para cada ESP32, puede tener cualquier nombre, pero tiene que ser uno diferente en caso de que se utilice más de uno
+
+define WIFI_SSID "WIFI" <-- Este es el nombre del wifi donde se va a probar todo el proyecto
+
+define WIFI_PASSWORD "Contraseña" <-- Acá va la contraseña del WIFI que se está utilizando
+
+define MQTT_SERVER "X.X.X.X" <-- Acá va la IP de la raspberry pi, más adelante se explica cómo obtener esta IP
+
+define MQTT_PORT 1883 <-- Este es el puerto de la raspberry
 
 Luego de hacer esos cambios podemos verificar el código y proceder a subirlo al ESP32.
 
